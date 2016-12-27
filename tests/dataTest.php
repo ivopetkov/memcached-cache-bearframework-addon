@@ -16,7 +16,7 @@ class DataTest extends BearFrameworkAddonTestCase
     /**
      * 
      */
-    public function test1()
+    public function testConnect()
     {
         $m = new Memcached();
         $m->addServer('localhost', 11211);
