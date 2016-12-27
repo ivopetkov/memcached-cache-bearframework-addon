@@ -2,14 +2,16 @@ language: php
 
 php:
   - 7.0
-  - 7.1
   
 install:
   - composer install
   
 services:
   - memcached
-  
+
+before_install:
+    echo "extension = memcached.so" >> ~/.phpenv/versions/$(phpenv version-name)/etc/php.ini
+
 script:
   - vendor/bin/phpunit --coverage-clover=coverage.xml --configuration phpunit.xml
   
