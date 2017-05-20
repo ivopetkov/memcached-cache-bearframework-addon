@@ -80,7 +80,7 @@ class MemcachedCacheDriver implements \BearFramework\App\ICacheDriver
                 
             }
             return null;
-        } elseif ($instance->getResultCode() === Memcached::RES_NOTFOUND) {
+        } elseif ($instance->getResultCode() === \Memcached::RES_NOTFOUND) {
             return null;
         } else {
             throw new \Exception('Cannot get value from memcached (' . $key . ')');
@@ -97,7 +97,7 @@ class MemcachedCacheDriver implements \BearFramework\App\ICacheDriver
     {
         $instance = $this->getInstance();
         $result = $instance->delete(md5($key));
-        if ($result === true || $instance->getResultCode() === Memcached::RES_NOTFOUND) {
+        if ($result === true || $instance->getResultCode() === \Memcached::RES_NOTFOUND) {
             
         } else {
             throw new \Exception('Cannot delete value from memcached (' . $key . ')');
