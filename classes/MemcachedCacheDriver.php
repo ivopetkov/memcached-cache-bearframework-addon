@@ -54,7 +54,24 @@ class MemcachedCacheDriver implements \BearFramework\App\ICacheDriver
     public function set(string $key, $value, int $ttl = null): void
     {
         $instance = $this->getInstance();
-        $result = $instance->set(md5($key), gzcompress(serialize([$key, $value])), $ttl !== null && $ttl > 0 ? time() + $ttl : 0);
+        $ttlToSet = $ttl !== null && $ttl > 0 ? time() + $ttl : 0;
+        $valueToSet = gzcompress(serialize([$key, $value]));
+        $valueLimit = 900000;
+        if (strlen($valueToSet) > $valueLimit) {
+            $partsToSet = str_split($valueToSet, 900000);
+            $partsID = md5(uniqid());
+            $partsCount = sizeof($partsToSet);
+            foreach ($partsToSet as $i => $partToSet) {
+                if ($i === 0) {
+                    $keyToSet = md5($key);
+                } else {
+                    $keyToSet = md5(md5($key) . md5($partsID) . md5($i));
+                }
+                $result = $instance->set($keyToSet, 'multipart:' . $partsCount . ':' . $partsID . ':' . $i . ':' . $partToSet, $ttlToSet);
+            }
+        } else {
+            $result = $instance->set(md5($key), $valueToSet, $ttlToSet);
+        }
         if ($result !== true) {
             throw new \Exception('Cannot set value in memcached (' . $key . ')');
         }
@@ -71,6 +88,39 @@ class MemcachedCacheDriver implements \BearFramework\App\ICacheDriver
         $instance = $this->getInstance();
         $value = $instance->get(md5($key));
         if ($value !== false) {
+            $partsData = [];
+            if (substr($value, 0, 10) === 'multipart:') {
+                $partsData = explode(':', $value, 5);
+                $partsCount = $partsData[1];
+                if (!is_numeric($partsCount)) {
+                    return null;
+                }
+                $partsID = $partsData[2];
+                if (strlen($partsID) !== 32) {
+                    return null;
+                }
+                if ($partsData[2] !== '0') {
+                    return;
+                }
+                $partsData[0] = $partsData[4];
+                for ($i = 1; $i <= $partsCount; $i++) {
+                    $partKey = md5(md5($key) . md5($partsID) . md5($i));
+                    $partValue = $instance->get($partKey);
+                    if ($value !== false) {
+                        $expectedPartPrefix = 'multipart:' . $partsCount . ':' . $partsID . ':' . $i . ':';
+                        if (substr($partValue, 0, strlen($expectedPartPrefix)) === $expectedPartPrefix) {
+                            $partsData[$i] = substr($partValue, strlen($expectedPartPrefix));
+                            continue;
+                        }
+                    }
+                    return false;
+                }
+                if (sizeof($partsData) === $partsCount) {
+                    $value = implode('', $partsData);
+                } else {
+                    return false;
+                }
+            }
             try {
                 $value = unserialize(gzuncompress($value));
                 if (is_array($value) && $value[0] === $key) {
