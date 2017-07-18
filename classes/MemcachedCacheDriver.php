@@ -68,6 +68,9 @@ class MemcachedCacheDriver implements \BearFramework\App\ICacheDriver
                     $keyToSet = md5(md5($key) . md5($partsID) . md5($i));
                 }
                 $result = $instance->set($keyToSet, 'multipart:' . $partsCount . ':' . $partsID . ':' . $i . ':' . $partToSet, $ttlToSet);
+                if ($result !== true) {
+                    break;
+                }
             }
         } else {
             $result = $instance->set(md5($key), $valueToSet, $ttlToSet);
@@ -90,23 +93,24 @@ class MemcachedCacheDriver implements \BearFramework\App\ICacheDriver
         if ($value !== false) {
             $partsData = [];
             if (substr($value, 0, 10) === 'multipart:') {
-                $partsData = explode(':', $value, 5);
-                $partsCount = $partsData[1];
+                $partData = explode(':', $value, 5);
+                $partsCount = $partData[1];
                 if (!is_numeric($partsCount)) {
                     return null;
                 }
-                $partsID = $partsData[2];
+                $partsCount = (int) $partsCount;
+                $partsID = $partData[2];
                 if (strlen($partsID) !== 32) {
                     return null;
                 }
-                if ($partsData[2] !== '0') {
+                if ($partData[3] !== '0') {
                     return;
                 }
-                $partsData[0] = $partsData[4];
-                for ($i = 1; $i <= $partsCount; $i++) {
+                $partsData[0] = $partData[4];
+                for ($i = 1; $i < $partsCount; $i++) {
                     $partKey = md5(md5($key) . md5($partsID) . md5($i));
                     $partValue = $instance->get($partKey);
-                    if ($value !== false) {
+                    if ($partValue !== false) {
                         $expectedPartPrefix = 'multipart:' . $partsCount . ':' . $partsID . ':' . $i . ':';
                         if (substr($partValue, 0, strlen($expectedPartPrefix)) === $expectedPartPrefix) {
                             $partsData[$i] = substr($partValue, strlen($expectedPartPrefix));
