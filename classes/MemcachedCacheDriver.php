@@ -104,7 +104,7 @@ class MemcachedCacheDriver implements \BearFramework\App\ICacheDriver
                     return null;
                 }
                 if ($partData[3] !== '0') {
-                    return;
+                    return null;
                 }
                 $partsData[0] = $partData[4];
                 for ($i = 1; $i < $partsCount; $i++) {
@@ -117,12 +117,12 @@ class MemcachedCacheDriver implements \BearFramework\App\ICacheDriver
                             continue;
                         }
                     }
-                    return false;
+                    return null;
                 }
                 if (sizeof($partsData) === $partsCount) {
                     $value = implode('', $partsData);
                 } else {
-                    return false;
+                    return null;
                 }
             }
             try {
