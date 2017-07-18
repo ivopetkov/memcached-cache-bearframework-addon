@@ -61,4 +61,24 @@ class DataTest extends BearFrameworkAddonTestCase
         $app->cache->delete('key1');
     }
 
+    /**
+     * 
+     */
+    public function testBigValues()
+    {
+        $app = $this->getApp();
+
+        $app->cache->delete('key1');
+
+        $text = '';
+        for ($i = 0; $i < 200000; $i++) {
+            $text .= base64_encode(md5(uniqid()));
+        }
+
+        $cacheItem = $app->cache->make('key1', $text);
+        $app->cache->set($cacheItem);
+        $result = $app->cache->getValue('key1');
+        $this->assertTrue($result === $text);
+    }
+
 }
