@@ -10,8 +10,26 @@
 /**
  * @runTestsInSeparateProcesses
  */
-class DataTest extends BearFrameworkAddonTestCase
+class DataTest extends BearFramework\AddonTests\PHPUnitTestCase
 {
+
+    /**
+     * 
+     */
+    protected function setUp()
+    {
+        $this->initializeApp([
+            'addonOptions' => [
+                'servers' => [
+                    [
+                        'host' => 'localhost',
+                        'port' => 11211
+                    ]
+                ]
+            ]
+        ]);
+        parent::setUp();
+    }
 
     /**
      * 
