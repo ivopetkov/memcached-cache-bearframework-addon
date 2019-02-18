@@ -9,8 +9,6 @@
 
 namespace IvoPetkov\BearFrameworkAddons;
 
-use BearFramework\App;
-
 /**
  * Mamcached based cache driver.
  */
