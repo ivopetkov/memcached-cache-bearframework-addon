@@ -13,22 +13,20 @@
 class DataTest extends BearFramework\AddonTests\PHPUnitTestCase
 {
 
-    /**
-     * 
-     */
-    protected function setUp()
+    protected function initializeApp(bool $setLogger = true, bool $setDataDriver = true, bool $setCacheDriver = true, bool $addAddon = true): \BearFramework\App
     {
-        $this->initializeApp([
-            'addonOptions' => [
-                'servers' => [
-                    [
-                        'host' => 'localhost',
-                        'port' => 11211
-                    ]
-                ]
-            ]
-        ]);
-        parent::setUp();
+        $app = parent::initializeApp($setLogger, $setDataDriver, false, $addAddon);
+        if ($setCacheDriver) {
+            $app->cache->setDriver(new \IvoPetkov\BearFrameworkAddons\MemcachedCacheDriver([
+                        'servers' => [
+                            [
+                                'host' => 'localhost',
+                                'port' => 11211
+                            ]
+                        ]
+            ]));
+        }
+        return $app;
     }
 
     /**

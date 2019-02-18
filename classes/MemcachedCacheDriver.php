@@ -17,30 +17,42 @@ use BearFramework\App;
 class MemcachedCacheDriver implements \BearFramework\App\ICacheDriver
 {
 
-    private static $instances = [];
+    /**
+     *
+     * @var \Memcached|null
+     */
+    private $instance = null;
 
-    private function getInstance()
+    /**
+     * Initializes the cache driver.
+     * 
+     * @param array $options
+     */
+    public function __construct(array $options = [])
     {
-        $serverIndex = 0;
-        if (!isset(self::$instances[$serverIndex])) {
-            $app = App::get();
-            $addonOptions = $app->addons->get('ivopetkov/memcached-cache-bearframework-addon')->options;
-            if (!isset($addonOptions['servers'])) {
-                throw new \Exception('No memcached servers specified');
-            }
-            foreach ($addonOptions['servers'] as $server) {
-                if (!isset($server['host'])) {
-                    throw new \Exception('Missing memcached server host');
-                }
-                if (!isset($server['port'])) {
-                    throw new \Exception('Missing memcached server port');
-                }
-                self::$instances[$serverIndex] = new \Memcached();
-                self::$instances[$serverIndex]->addServer($server['host'], $server['port']);
-                break;
-            }
+        if (!isset($options['servers'])) {
+            throw new \Exception('No memcached servers specified');
         }
-        return self::$instances[$serverIndex];
+        foreach ($options['servers'] as $server) {
+            if (!isset($server['host'])) {
+                throw new \Exception('Missing memcached server host');
+            }
+            if (!isset($server['port'])) {
+                throw new \Exception('Missing memcached server port');
+            }
+            $this->instance = new \Memcached();
+            $this->instance->addServer($server['host'], $server['port']);
+            break;
+        }
+    }
+
+    /**
+     * 
+     * @return \Memcached|null
+     */
+    private function getInstance(): ?\Memcached
+    {
+        return $this->instance;
     }
 
     /**
