@@ -72,7 +72,7 @@ class MemcachedCacheDriver implements \BearFramework\App\ICacheDriver
      */
     public function set(string $key, $value, int $ttl = null): void
     {
-        list($instance, $keyPrefix) = $this->getInstance();
+        list($instance, $keyPrefix) = $this->getInstance($key);
         $ttlToSet = $ttl !== null && $ttl > 0 ? time() + $ttl : 0;
         $valueToSet = gzcompress(serialize([$key, $value]));
         $valueLimit = 900000;
@@ -107,7 +107,7 @@ class MemcachedCacheDriver implements \BearFramework\App\ICacheDriver
      */
     public function get(string $key)
     {
-        list($instance, $keyPrefix) = $this->getInstance();
+        list($instance, $keyPrefix) = $this->getInstance($key);
         $value = $instance->get(md5($keyPrefix) . md5($key));
         if ($value !== false) {
             $partsData = [];
@@ -168,7 +168,7 @@ class MemcachedCacheDriver implements \BearFramework\App\ICacheDriver
      */
     public function delete(string $key): void
     {
-        list($instance, $keyPrefix) = $this->getInstance();
+        list($instance, $keyPrefix) = $this->getInstance($key);
         $result = $instance->delete(md5($keyPrefix) . md5($key));
         if ($result === true || $instance->getResultCode() === \Memcached::RES_NOTFOUND) {
             
