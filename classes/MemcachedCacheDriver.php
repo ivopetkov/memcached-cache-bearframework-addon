@@ -17,9 +17,9 @@ class MemcachedCacheDriver implements \BearFramework\App\ICacheDriver
 
     /**
      *
-     * @var \Memcached|null
+     * @var array
      */
-    private $instance = null;
+    private $instances = [];
 
     /**
      * Initializes the cache driver.
@@ -38,19 +38,28 @@ class MemcachedCacheDriver implements \BearFramework\App\ICacheDriver
             if (!isset($server['port'])) {
                 throw new \Exception('Missing memcached server port');
             }
-            $this->instance = new \Memcached();
-            $this->instance->addServer($server['host'], $server['port']);
-            break;
+            $this->instances[] = [$server['host'], $server['port'], isset($server['keyPrefix']) ? $server['keyPrefix'] : '', null];
         }
     }
 
     /**
      * 
-     * @return \Memcached|null
+     * @param string $key
+     * @return array|null
      */
-    private function getInstance(): ?\Memcached
+    private function getInstance(string $key): ?array
     {
-        return $this->instance;
+        $instancesCount = sizeof($this->instances);
+        if ($instancesCount === 0) {
+            return null;
+        }
+        $index = base_convert(substr(md5($key), 0, 6), 16, 10) % $instancesCount;
+        $instance = $this->instances[$index];
+        if (!isset($instance[3])) {
+            $instance[3] = new \Memcached();
+            $instance[3]->addServer($instance[0], $instance[1]);
+        }
+        return [$instance[3], $instance[2]];
     }
 
     /**
@@ -63,7 +72,7 @@ class MemcachedCacheDriver implements \BearFramework\App\ICacheDriver
      */
     public function set(string $key, $value, int $ttl = null): void
     {
-        $instance = $this->getInstance();
+        list($instance, $keyPrefix) = $this->getInstance();
         $ttlToSet = $ttl !== null && $ttl > 0 ? time() + $ttl : 0;
         $valueToSet = gzcompress(serialize([$key, $value]));
         $valueLimit = 900000;
@@ -77,13 +86,13 @@ class MemcachedCacheDriver implements \BearFramework\App\ICacheDriver
                 } else {
                     $keyToSet = md5(md5($key) . md5($partsID) . md5($i));
                 }
-                $result = $instance->set($keyToSet, 'multipart:' . $partsCount . ':' . $partsID . ':' . $i . ':' . $partToSet, $ttlToSet);
+                $result = $instance->set(md5($keyPrefix) . $keyToSet, 'multipart:' . $partsCount . ':' . $partsID . ':' . $i . ':' . $partToSet, $ttlToSet);
                 if ($result !== true) {
                     break;
                 }
             }
         } else {
-            $result = $instance->set(md5($key), $valueToSet, $ttlToSet);
+            $result = $instance->set(md5($keyPrefix) . md5($key), $valueToSet, $ttlToSet);
         }
         if ($result !== true) {
             throw new \Exception('Cannot set value in memcached (' . $key . ')');
@@ -98,8 +107,8 @@ class MemcachedCacheDriver implements \BearFramework\App\ICacheDriver
      */
     public function get(string $key)
     {
-        $instance = $this->getInstance();
-        $value = $instance->get(md5($key));
+        list($instance, $keyPrefix) = $this->getInstance();
+        $value = $instance->get(md5($keyPrefix) . md5($key));
         if ($value !== false) {
             $partsData = [];
             if (substr($value, 0, 10) === 'multipart:') {
@@ -119,7 +128,7 @@ class MemcachedCacheDriver implements \BearFramework\App\ICacheDriver
                 $partsData[0] = $partData[4];
                 for ($i = 1; $i < $partsCount; $i++) {
                     $partKey = md5(md5($key) . md5($partsID) . md5($i));
-                    $partValue = $instance->get($partKey);
+                    $partValue = $instance->get(md5($keyPrefix) . $partKey);
                     if ($partValue !== false) {
                         $expectedPartPrefix = 'multipart:' . $partsCount . ':' . $partsID . ':' . $i . ':';
                         if (substr($partValue, 0, strlen($expectedPartPrefix)) === $expectedPartPrefix) {
@@ -159,8 +168,8 @@ class MemcachedCacheDriver implements \BearFramework\App\ICacheDriver
      */
     public function delete(string $key): void
     {
-        $instance = $this->getInstance();
-        $result = $instance->delete(md5($key));
+        list($instance, $keyPrefix) = $this->getInstance();
+        $result = $instance->delete(md5($keyPrefix) . md5($key));
         if ($result === true || $instance->getResultCode() === \Memcached::RES_NOTFOUND) {
             
         } else {
@@ -214,10 +223,15 @@ class MemcachedCacheDriver implements \BearFramework\App\ICacheDriver
      */
     public function clear(): void
     {
-        $instance = $this->getInstance();
-        $result = $instance->flush();
-        if ($result !== true) {
-            throw new \Exception('Cannot clear all values from memcached');
+        foreach ($this->instances as $instance) {
+            if (!isset($instance[3])) {
+                $instance[3] = new \Memcached();
+                $instance[3]->addServer($instance[0], $instance[1]);
+            }
+            $result = $instance[3]->flush();
+            if ($result !== true) {
+                throw new \Exception('Cannot clear all values from memcached (' . $instance[0] . ':' . $instance[1] . ')');
+            }
         }
     }
 

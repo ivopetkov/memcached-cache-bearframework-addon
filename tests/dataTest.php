@@ -21,7 +21,13 @@ class DataTest extends BearFramework\AddonTests\PHPUnitTestCase
                         'servers' => [
                             [
                                 'host' => 'localhost',
-                                'port' => 11211
+                                'port' => 11211,
+                                'keyPrefix' => 'prefix1'
+                            ],
+                            [
+                                'host' => 'localhost',
+                                'port' => 11211,
+                                'keyPrefix' => 'prefix2'
                             ]
                         ]
             ]));
