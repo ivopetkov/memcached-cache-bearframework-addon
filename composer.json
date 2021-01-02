@@ -1,7 +1,12 @@
 {
     "name": "ivopetkov/memcached-cache-bearframework-addon",
     "description": "Memcached cache addon for Bear Framework",
-    "keywords": ["memcached", "cache", "addon", "Bear Framework"],
+    "keywords": [
+        "memcached",
+        "cache",
+        "addon",
+        "Bear Framework"
+    ],
     "homepage": "https://github.com/ivopetkov/memcached-cache-bearframework-addon",
     "license": "MIT",
     "authors": [
@@ -16,10 +21,11 @@
         "bearframework/bearframework": "1.*"
     },
     "require-dev": {
-        "bearframework/addon-tests": "0.3.*",
-        "phpunit/phpunit": "7.*"
+        "bearframework/addon-tests": "1.*"
     },
     "autoload": {
-        "files": ["autoload.php"]
+        "files": [
+            "autoload.php"
+        ]
     }
 }
