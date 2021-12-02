@@ -18,18 +18,18 @@ class DataTest extends BearFramework\AddonTests\PHPUnitTestCase
         $app = parent::initializeApp($setLogger, $setDataDriver, false, $addAddon);
         if ($setCacheDriver) {
             $app->cache->setDriver(new \IvoPetkov\BearFrameworkAddons\MemcachedCacheDriver([
-                        'servers' => [
-                            [
-                                'host' => 'localhost',
-                                'port' => 11211,
-                                'keyPrefix' => 'prefix1'
-                            ],
-                            [
-                                'host' => 'localhost',
-                                'port' => 11211,
-                                'keyPrefix' => 'prefix2'
-                            ]
-                        ]
+                'servers' => [
+                    [
+                        'host' => 'localhost',
+                        'port' => 11211,
+                        'keyPrefix' => 'prefix1'
+                    ],
+                    [
+                        'host' => 'localhost',
+                        'port' => 11211,
+                        'keyPrefix' => 'prefix2'
+                    ]
+                ]
             ]));
         }
         return $app;
@@ -102,5 +102,4 @@ class DataTest extends BearFramework\AddonTests\PHPUnitTestCase
         $result = $app->cache->getValue('key1');
         $this->assertTrue($result === $text);
     }
-
 }
