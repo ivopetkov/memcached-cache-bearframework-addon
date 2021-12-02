@@ -13,4 +13,4 @@ $app = App::get();
 $context = $app->contexts->get(__DIR__);
 
 $context->classes
-        ->add('IvoPetkov\BearFrameworkAddons\MemcachedCacheDriver', 'classes/MemcachedCacheDriver.php');
+    ->add('IvoPetkov\BearFrameworkAddons\MemcachedCacheDriver', 'classes/MemcachedCacheDriver.php');
