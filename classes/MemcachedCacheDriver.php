@@ -150,13 +150,12 @@ class MemcachedCacheDriver implements \BearFramework\App\ICacheDriver
                     return $value[1];
                 }
             } catch (\Exception $e) {
-                
             }
             return null;
         } elseif ($instance->getResultCode() === \Memcached::RES_NOTFOUND) {
             return null;
         } else {
-            throw new \Exception('Cannot get value from memcached (' . $key . ')');
+            throw new \Exception('Cannot get value from memcached (' . $key . ', error code: ' . $instance->getResultCode() . ')');
         }
     }
 
@@ -171,7 +170,6 @@ class MemcachedCacheDriver implements \BearFramework\App\ICacheDriver
         list($instance, $keyPrefix) = $this->getInstance($key);
         $result = $instance->delete(md5($keyPrefix) . md5($key));
         if ($result === true || $instance->getResultCode() === \Memcached::RES_NOTFOUND) {
-            
         } else {
             throw new \Exception('Cannot delete value from memcached (' . $key . ')');
         }
@@ -234,5 +232,4 @@ class MemcachedCacheDriver implements \BearFramework\App\ICacheDriver
             }
         }
     }
-
 }
