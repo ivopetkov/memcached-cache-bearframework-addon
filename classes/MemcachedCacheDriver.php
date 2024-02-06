@@ -95,7 +95,7 @@ class MemcachedCacheDriver implements \BearFramework\App\ICacheDriver
             $result = $instance->set(md5($keyPrefix) . md5($key), $valueToSet, $ttlToSet);
         }
         if ($result !== true) {
-            throw new \Exception('Cannot set value in memcached (' . $key . ')');
+            throw new \Exception('Cannot set value in memcached (' . $key . ', error code: ' . $instance->getResultCode() . ')');
         }
     }
 
@@ -171,7 +171,7 @@ class MemcachedCacheDriver implements \BearFramework\App\ICacheDriver
         $result = $instance->delete(md5($keyPrefix) . md5($key));
         if ($result === true || $instance->getResultCode() === \Memcached::RES_NOTFOUND) {
         } else {
-            throw new \Exception('Cannot delete value from memcached (' . $key . ')');
+            throw new \Exception('Cannot delete value from memcached (' . $key . ', error code: ' . $instance->getResultCode() . ')');
         }
     }
 
@@ -228,7 +228,7 @@ class MemcachedCacheDriver implements \BearFramework\App\ICacheDriver
             }
             $result = $instance[3]->flush();
             if ($result !== true) {
-                throw new \Exception('Cannot clear all values from memcached (' . $instance[0] . ':' . $instance[1] . ')');
+                throw new \Exception('Cannot clear all values from memcached (' . $instance[0] . ':' . $instance[1] . ', error code: ' . $instance[3]->getResultCode() . ')');
             }
         }
     }
