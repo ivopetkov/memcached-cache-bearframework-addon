@@ -95,7 +95,13 @@ class MemcachedCacheDriver implements \BearFramework\App\ICacheDriver
             $result = $instance->set(md5($keyPrefix) . md5($key), $valueToSet, $ttlToSet);
         }
         if ($result !== true) {
-            throw new \Exception('Cannot set value in memcached (' . $key . ', error code: ' . $instance->getResultCode() . ')');
+            $errorCode = $instance->getResultCode();
+            if ($errorCode === 48) { // MEMCACHED_SERVER_MEMORY_ALLOCATION_FAILURE
+                $instance->flush();
+                throw new \Exception('Cannot set value in memcached (' . $key . ', critical error, flush server, result code: ' . $instance->getResultCode() . ')');
+            } else {
+                throw new \Exception('Cannot set value in memcached (' . $key . ', error code: ' . $errorCode . ')');
+            }
         }
     }
 
