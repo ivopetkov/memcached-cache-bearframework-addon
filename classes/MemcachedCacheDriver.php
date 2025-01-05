@@ -49,7 +49,7 @@ class MemcachedCacheDriver implements \BearFramework\App\ICacheDriver
      */
     private function getInstance(string $key): ?array
     {
-        $instancesCount = sizeof($this->instances);
+        $instancesCount = count($this->instances);
         if ($instancesCount === 0) {
             return null;
         }
@@ -70,7 +70,7 @@ class MemcachedCacheDriver implements \BearFramework\App\ICacheDriver
      * @param int $ttl Number of seconds to store value in the cache.
      * @return void No value is returned.
      */
-    public function set(string $key, $value, int $ttl = null): void
+    public function set(string $key, $value, ?int $ttl = null): void
     {
         list($instance, $keyPrefix) = $this->getInstance($key);
         $ttlToSet = $ttl !== null && $ttl > 0 ? time() + $ttl : 0;
@@ -79,7 +79,7 @@ class MemcachedCacheDriver implements \BearFramework\App\ICacheDriver
         if (strlen($valueToSet) > $valueLimit) {
             $partsToSet = str_split($valueToSet, 900000);
             $partsID = md5(uniqid());
-            $partsCount = sizeof($partsToSet);
+            $partsCount = count($partsToSet);
             foreach ($partsToSet as $i => $partToSet) {
                 if ($i === 0) {
                     $keyToSet = md5($key);
@@ -144,7 +144,7 @@ class MemcachedCacheDriver implements \BearFramework\App\ICacheDriver
                     }
                     return null;
                 }
-                if (sizeof($partsData) === $partsCount) {
+                if (count($partsData) === $partsCount) {
                     $value = implode('', $partsData);
                 } else {
                     return null;
@@ -188,7 +188,7 @@ class MemcachedCacheDriver implements \BearFramework\App\ICacheDriver
      * @param int $ttl Number of seconds to store values in the cache.
      * @return void No value is returned.
      */
-    public function setMultiple(array $items, int $ttl = null): void
+    public function setMultiple(array $items, ?int $ttl = null): void
     {
         foreach ($items as $key => $value) {
             $this->set($key, $value, $ttl);
